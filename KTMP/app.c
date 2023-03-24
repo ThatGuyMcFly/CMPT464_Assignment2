@@ -7374,7 +7374,7 @@ typedef struct {
     char messageType;
     char requestNumber;
     char senderId;
-    char receiverId;
+    char destinationId;
     char messageRecord[20];
     char recordIndex;
     char status;
@@ -7396,6 +7396,8 @@ int recordCount;
 
 protocol currentProtocol;
 
+message * messagePtr;
+
 int sfd = -1;
 
 
@@ -7403,9 +7405,9 @@ int sfd = -1;
 
 #define Transmit_Message 0
 #define Confirm_Transmission 1
-# 50 "app.cc"
+# 52 "app.cc"
 void transmitter (word __pi_st) { message * messagePtr = (message *)(__pi_curr->data); switch (__pi_st) { 
-# 50 "app.cc"
+# 52 "app.cc"
 
     case Transmit_Message : __stlab_Transmit_Message: {
 
@@ -7419,7 +7421,7 @@ void transmitter (word __pi_st) { message * messagePtr = (message *)(__pi_curr->
         *p = messagePtr->messageType; p++;
         *p = messagePtr->requestNumber; p++;
         *p = messagePtr->senderId; p++;
-        *p = messagePtr->receiverId; p++;
+        *p = messagePtr->destinationId; p++;
 
         tcv_endp (spkt);
 
@@ -7429,7 +7431,7 @@ void transmitter (word __pi_st) { message * messagePtr = (message *)(__pi_curr->
 break; } default: __pi_badstate (); } }
 #undef Transmit_Message
 #undef Confirm_Transmission
-# 70 "app.cc"
+# 72 "app.cc"
 
 
 
@@ -7484,12 +7486,12 @@ char randomNumber() {
 #define Prompt_Record_Index 16
 #define Get_Record_Index 17
 #define Transmit_Message 18
-# 104 "app.cc"
+# 106 "app.cc"
 void root (word __pi_st) { switch (__pi_st) { 
-# 104 "app.cc"
+# 106 "app.cc"
 
 
-    static char *menu="(G)roup ID\r\n""(N)ew device ID\r\n""(F)ind neighbors\r\n""(C)reate record on neighbor\r\n""(D)elete record on neighbor\r\n""(R)etrieve record from neighbor\r\n""(S)how local records\r\n""R(e)set local storage\r\n\r\n""Selection:";
+    static char *menu="(G)roup ID\r\n""(N)ew device ID\r\n""(F)ind neighbors\r\n""(C)reate record on neighbor\r\n""(D)elete record on neighbor\r\n""(R)etrieve record from neighbor\r\n""(S)how local records\r\n""R(e)set local storage\r\n\r\n""Selection: ";
 
 
 
@@ -7500,8 +7502,6 @@ void root (word __pi_st) { switch (__pi_st) {
 
 
     static char receiverId;
-
-    static message *messagePtr;
 
     case Initialize : __stlab_Initialize: {
         recordCount = 0;
@@ -7675,7 +7675,7 @@ void root (word __pi_st) { switch (__pi_st) {
         messagePtr -> messageType = currentProtocol;
         messagePtr -> requestNumber = randomNumber();
         messagePtr -> senderId = nodeId;
-        messagePtr -> receiverId = receiverId;
+        messagePtr -> destinationId = receiverId;
 
         do { if (__pi_join (__pi_fork (transmitter, (aword)(messagePtr )), Menu_Header )) __pi_release (); } while (0);
 break; } default: __pi_badstate (); } }

@@ -21,7 +21,7 @@ typedef struct {
     char messageType;
     char requestNumber;
     char senderId;
-    char receiverId;
+    char destinationId;
     char messageRecord[RECORD_LENGTH];
     char recordIndex;
     char status;
@@ -43,6 +43,8 @@ int recordCount;
 
 protocol currentProtocol;
 
+message * messagePtr;
+
 int sfd = -1;
 /**
  * State machine for handling transmitting messages
@@ -56,11 +58,11 @@ fsm transmitter (message * messagePtr) {
         spkt = tcv_wnp (Transmit_Message, sfd, sizeof(message) + 4);
         spkt [0] = 0;
         byte * p = (byte*)(spkt + 1); // skip first 2 bytes
-        *p = messagePtr->senderGroupId; p += 2;
-        *p = messagePtr->messageType; p++;
-        *p = messagePtr->requestNumber; p++;
+        *p = messagePtr->senderGroupId; p += 2; // insert group ID
+        *p = messagePtr->messageType; p++; // insert message type
+        *p = messagePtr->requestNumber; p++; // insert request number
         *p = messagePtr->senderId; p++; // insert sender ID
-        *p = messagePtr->receiverId; p++; // insert receiveer ID
+        *p = messagePtr->destinationId; p++; // insert receiver ID
 
         tcv_endp (spkt);
 
@@ -114,8 +116,6 @@ fsm root {
 "Selection: ";
 
     char receiverId;
-
-    message * messagePtr;
 
     state Initialize:
         recordCount = 0;
@@ -285,7 +285,7 @@ fsm root {
         messagePtr -> messageType = currentProtocol;
         messagePtr -> requestNumber = randomNumber();
         messagePtr -> senderId = nodeId;
-        messagePtr -> receiverId = receiverId;
+        messagePtr -> destinationId = receiverId;
 
         call transmitter(messagePtr, Menu_Header);
 }
