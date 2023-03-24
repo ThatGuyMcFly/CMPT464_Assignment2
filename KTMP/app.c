@@ -830,7 +830,535 @@ typedef struct __tzinfo_struct
 } __tzinfo_type;
 
 __tzinfo_type *__gettzinfo (void);
-# 2 "app.cc"
+# 37 "/usr/include/newlib/stdio.h"
+
+
+
+# 40 "/usr/lib/gcc/arm-none-eabi/9.2.1/include/stdarg.h"
+typedef __builtin_va_list __gnuc_va_list;
+# 63 "/usr/include/newlib/stdio.h"
+
+
+
+typedef __FILE FILE;
+
+
+
+
+
+
+typedef _fpos_t fpos_t;
+
+
+
+
+
+# 186 "/usr/include/newlib/stdio.h"
+FILE * tmpfile (void);
+char * tmpnam (char *);
+
+
+
+int fclose (FILE *);
+int fflush (FILE *);
+FILE * freopen (const char *restrict, const char *restrict, FILE *restrict);
+void setbuf (FILE *restrict, char *restrict);
+int setvbuf (FILE *restrict, char *restrict, int, size_t);
+int fprintf (FILE *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 2, 3)));
+int fscanf (FILE *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 2, 3)));
+int printf (const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 1, 2)));
+int scanf (const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 1, 2)));
+int sscanf (const char *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 2, 3)));
+int vfprintf (FILE *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 2, 0)));
+int vprintf (const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 1, 0)));
+int vsprintf (char *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 2, 0)));
+int fgetc (FILE *);
+char * fgets (char *restrict, int, FILE *restrict);
+int fputc (int, FILE *);
+int fputs (const char *restrict, FILE *restrict);
+int getc (FILE *);
+int getchar (void);
+char * gets (char *);
+int putc (int, FILE *);
+int putchar (int);
+int puts (const char *);
+int ungetc (int, FILE *);
+size_t fread (void *restrict, size_t _size, size_t _n, FILE *restrict);
+size_t fwrite (const void *restrict , size_t _size, size_t _n, FILE *);
+
+
+
+int fgetpos (FILE *restrict, fpos_t *restrict);
+
+int fseek (FILE *, long, int);
+
+
+
+int fsetpos (FILE *, const fpos_t *);
+
+long ftell ( FILE *);
+void rewind (FILE *);
+void clearerr (FILE *);
+int feof (FILE *);
+int ferror (FILE *);
+void perror (const char *);
+
+FILE * fopen (const char *restrict _name, const char *restrict _type);
+int sprintf (char *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 2, 3)));
+int remove (const char *);
+int rename (const char *, const char *);
+# 266 "/usr/include/newlib/stdio.h"
+int snprintf (char *restrict, size_t, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int vsnprintf (char *restrict, size_t, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int vfscanf (FILE *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 2, 0)));
+int vscanf (const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 1, 0)));
+int vsscanf (const char *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 2, 0)));
+# 396 "/usr/include/newlib/stdio.h"
+int _asiprintf_r (struct _reent *, char **, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+char * _asniprintf_r (struct _reent *, char *, size_t *, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 4, 5)));
+char * _asnprintf_r (struct _reent *, char *restrict, size_t *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 4, 5)));
+int _asprintf_r (struct _reent *, char **restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _diprintf_r (struct _reent *, int, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _dprintf_r (struct _reent *, int, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _fclose_r (struct _reent *, FILE *);
+int _fcloseall_r (struct _reent *);
+FILE * _fdopen_r (struct _reent *, int, const char *);
+int _fflush_r (struct _reent *, FILE *);
+int _fgetc_r (struct _reent *, FILE *);
+int _fgetc_unlocked_r (struct _reent *, FILE *);
+char * _fgets_r (struct _reent *, char *restrict, int, FILE *restrict);
+char * _fgets_unlocked_r (struct _reent *, char *restrict, int, FILE *restrict);
+
+
+
+
+int _fgetpos_r (struct _reent *, FILE *, fpos_t *);
+int _fsetpos_r (struct _reent *, FILE *, const fpos_t *);
+
+int _fiprintf_r (struct _reent *, FILE *, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _fiscanf_r (struct _reent *, FILE *, const char *, ...)
+               __attribute__ ((__format__ (__scanf__, 3, 4)));
+FILE * _fmemopen_r (struct _reent *, void *restrict, size_t, const char *restrict);
+FILE * _fopen_r (struct _reent *, const char *restrict, const char *restrict);
+FILE * _freopen_r (struct _reent *, const char *restrict, const char *restrict, FILE *restrict);
+int _fprintf_r (struct _reent *, FILE *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _fpurge_r (struct _reent *, FILE *);
+int _fputc_r (struct _reent *, int, FILE *);
+int _fputc_unlocked_r (struct _reent *, int, FILE *);
+int _fputs_r (struct _reent *, const char *restrict, FILE *restrict);
+int _fputs_unlocked_r (struct _reent *, const char *restrict, FILE *restrict);
+size_t _fread_r (struct _reent *, void *restrict, size_t _size, size_t _n, FILE *restrict);
+size_t _fread_unlocked_r (struct _reent *, void *restrict, size_t _size, size_t _n, FILE *restrict);
+int _fscanf_r (struct _reent *, FILE *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 3, 4)));
+int _fseek_r (struct _reent *, FILE *, long, int);
+int _fseeko_r (struct _reent *, FILE *, _off_t, int);
+long _ftell_r (struct _reent *, FILE *);
+_off_t _ftello_r (struct _reent *, FILE *);
+void _rewind_r (struct _reent *, FILE *);
+size_t _fwrite_r (struct _reent *, const void *restrict, size_t _size, size_t _n, FILE *restrict);
+size_t _fwrite_unlocked_r (struct _reent *, const void *restrict, size_t _size, size_t _n, FILE *restrict);
+int _getc_r (struct _reent *, FILE *);
+int _getc_unlocked_r (struct _reent *, FILE *);
+int _getchar_r (struct _reent *);
+int _getchar_unlocked_r (struct _reent *);
+char * _gets_r (struct _reent *, char *);
+int _iprintf_r (struct _reent *, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 2, 3)));
+int _iscanf_r (struct _reent *, const char *, ...)
+               __attribute__ ((__format__ (__scanf__, 2, 3)));
+FILE * _open_memstream_r (struct _reent *, char **, size_t *);
+void _perror_r (struct _reent *, const char *);
+int _printf_r (struct _reent *, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 2, 3)));
+int _putc_r (struct _reent *, int, FILE *);
+int _putc_unlocked_r (struct _reent *, int, FILE *);
+int _putchar_unlocked_r (struct _reent *, int);
+int _putchar_r (struct _reent *, int);
+int _puts_r (struct _reent *, const char *);
+int _remove_r (struct _reent *, const char *);
+int _rename_r (struct _reent *,
+      const char *_old, const char *_new);
+int _scanf_r (struct _reent *, const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 2, 3)));
+int _siprintf_r (struct _reent *, char *, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _siscanf_r (struct _reent *, const char *, const char *, ...)
+               __attribute__ ((__format__ (__scanf__, 3, 4)));
+int _sniprintf_r (struct _reent *, char *, size_t, const char *, ...)
+               __attribute__ ((__format__ (__printf__, 4, 5)));
+int _snprintf_r (struct _reent *, char *restrict, size_t, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 4, 5)));
+int _sprintf_r (struct _reent *, char *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__printf__, 3, 4)));
+int _sscanf_r (struct _reent *, const char *restrict, const char *restrict, ...)
+               __attribute__ ((__format__ (__scanf__, 3, 4)));
+char * _tempnam_r (struct _reent *, const char *, const char *);
+FILE * _tmpfile_r (struct _reent *);
+char * _tmpnam_r (struct _reent *, char *);
+int _ungetc_r (struct _reent *, int, FILE *);
+int _vasiprintf_r (struct _reent *, char **, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+char * _vasniprintf_r (struct _reent*, char *, size_t *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 4, 0)));
+char * _vasnprintf_r (struct _reent*, char *, size_t *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 4, 0)));
+int _vasprintf_r (struct _reent *, char **, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vdiprintf_r (struct _reent *, int, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vdprintf_r (struct _reent *, int, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vfiprintf_r (struct _reent *, FILE *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vfiscanf_r (struct _reent *, FILE *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 3, 0)));
+int _vfprintf_r (struct _reent *, FILE *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vfscanf_r (struct _reent *, FILE *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 3, 0)));
+int _viprintf_r (struct _reent *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 2, 0)));
+int _viscanf_r (struct _reent *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 2, 0)));
+int _vprintf_r (struct _reent *, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 2, 0)));
+int _vscanf_r (struct _reent *, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 2, 0)));
+int _vsiprintf_r (struct _reent *, char *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vsiscanf_r (struct _reent *, const char *, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 3, 0)));
+int _vsniprintf_r (struct _reent *, char *, size_t, const char *, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 4, 0)));
+int _vsnprintf_r (struct _reent *, char *restrict, size_t, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 4, 0)));
+int _vsprintf_r (struct _reent *, char *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__printf__, 3, 0)));
+int _vsscanf_r (struct _reent *, const char *restrict, const char *restrict, __gnuc_va_list)
+               __attribute__ ((__format__ (__scanf__, 3, 0)));
+
+
+
+int fpurge (FILE *);
+ssize_t __getdelim (char **, size_t *, int, FILE *);
+ssize_t __getline (char **, size_t *, FILE *);
+# 577 "/usr/include/newlib/stdio.h"
+int __srget_r (struct _reent *, FILE *);
+int __swbuf_r (struct _reent *, int, FILE *);
+# 687 "/usr/include/newlib/stdio.h"
+static __inline__ int __sputc_r(struct _reent *_ptr, int _c, FILE *_p) {
+
+
+
+
+ if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
+  return (*_p->_p++ = _c);
+ else
+  return (__swbuf_r(_ptr, _c, _p));
+}
+# 741 "/usr/include/newlib/stdio.h"
+static __inline int
+_getchar_unlocked(void)
+{
+ struct _reent *_ptr;
+
+ _ptr = _impure_ptr;
+ return ((--(((_ptr)->_stdin))->_r < 0 ? __srget_r(_ptr, ((_ptr)->_stdin)) : (int)(*(((_ptr)->_stdin))->_p++)));
+}
+
+static __inline int
+_putchar_unlocked(int _c)
+{
+ struct _reent *_ptr;
+
+ _ptr = _impure_ptr;
+ return (__sputc_r(_ptr, _c, ((_ptr)->_stdout)));
+}
+# 797 "/usr/include/newlib/stdio.h"
+
+# 11 "/usr/include/newlib/stdlib.h"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct
+{
+  int quot;
+  int rem;
+} div_t;
+
+typedef struct
+{
+  long quot;
+  long rem;
+} ldiv_t;
+
+
+typedef struct
+{
+  long long int quot;
+  long long int rem;
+} lldiv_t;
+
+
+
+
+typedef int (*__compar_fn_t) (const void *, const void *);
+
+
+
+
+
+
+
+int __locale_mb_cur_max (void);
+
+
+
+void abort (void) __attribute__ ((__noreturn__));
+int abs (int);
+
+
+
+
+
+int atexit (void (*__func)(void));
+double atof (const char *__nptr);
+
+
+
+int atoi (const char *__nptr);
+int _atoi_r (struct _reent *, const char *__nptr);
+long atol (const char *__nptr);
+long _atol_r (struct _reent *, const char *__nptr);
+void * bsearch (const void *__key,
+         const void *__base,
+         size_t __nmemb,
+         size_t __size,
+         __compar_fn_t _compar);
+void *calloc(size_t, size_t) __attribute__((__malloc__)) __attribute__((__warn_unused_result__))
+      __attribute__((__alloc_size__(1, 2))) ;
+div_t div (int __numer, int __denom);
+void exit (int __status) __attribute__ ((__noreturn__));
+void free (void *) ;
+char * getenv (const char *__string);
+char * _getenv_r (struct _reent *, const char *__string);
+
+
+
+char * _findenv (const char *, int *);
+char * _findenv_r (struct _reent *, const char *, int *);
+
+
+
+
+long labs (long);
+ldiv_t ldiv (long __numer, long __denom);
+void *malloc(size_t) __attribute__((__malloc__)) __attribute__((__warn_unused_result__)) __attribute__((__alloc_size__(1))) ;
+int mblen (const char *, size_t);
+int _mblen_r (struct _reent *, const char *, size_t, _mbstate_t *);
+int mbtowc (wchar_t *restrict, const char *restrict, size_t);
+int _mbtowc_r (struct _reent *, wchar_t *restrict, const char *restrict, size_t, _mbstate_t *);
+int wctomb (char *, wchar_t);
+int _wctomb_r (struct _reent *, char *, wchar_t, _mbstate_t *);
+size_t mbstowcs (wchar_t *restrict, const char *restrict, size_t);
+size_t _mbstowcs_r (struct _reent *, wchar_t *restrict, const char *restrict, size_t, _mbstate_t *);
+size_t wcstombs (char *restrict, const wchar_t *restrict, size_t);
+size_t _wcstombs_r (struct _reent *, char *restrict, const wchar_t *restrict, size_t, _mbstate_t *);
+# 137 "/usr/include/newlib/stdlib.h"
+char * _mkdtemp_r (struct _reent *, char *);
+int _mkostemp_r (struct _reent *, char *, int);
+int _mkostemps_r (struct _reent *, char *, int, int);
+int _mkstemp_r (struct _reent *, char *);
+int _mkstemps_r (struct _reent *, char *, int);
+char * _mktemp_r (struct _reent *, char *) __attribute__ ((__deprecated__("the use of `mktemp' is dangerous; use `mkstemp' instead")));
+void qsort (void *__base, size_t __nmemb, size_t __size, __compar_fn_t _compar);
+int rand (void);
+void *realloc(void *, size_t) __attribute__((__warn_unused_result__)) __attribute__((__alloc_size__(2))) ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+void srand (unsigned __seed);
+double strtod (const char *restrict __n, char **restrict __end_PTR);
+double _strtod_r (struct _reent *,const char *restrict __n, char **restrict __end_PTR);
+
+float strtof (const char *restrict __n, char **restrict __end_PTR);
+
+
+
+
+
+
+
+long strtol (const char *restrict __n, char **restrict __end_PTR, int __base);
+long _strtol_r (struct _reent *,const char *restrict __n, char **restrict __end_PTR, int __base);
+unsigned long strtoul (const char *restrict __n, char **restrict __end_PTR, int __base);
+unsigned long _strtoul_r (struct _reent *,const char *restrict __n, char **restrict __end_PTR, int __base);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int system (const char *__string);
+
+
+
+
+
+
+
+
+
+
+void _Exit (int __status) __attribute__ ((__noreturn__));
+
+
+
+
+int _putenv_r (struct _reent *, char *__string);
+void * _reallocf_r (struct _reent *, void *, size_t);
+
+
+
+int _setenv_r (struct _reent *, const char *__string, const char *__value, int __overwrite);
+
+
+
+
+
+
+
+
+
+
+
+char * __itoa (int, char *, int);
+char * __utoa (unsigned, char *, int);
+# 263 "/usr/include/newlib/stdlib.h"
+long long atoll (const char *__nptr);
+
+long long _atoll_r (struct _reent *, const char *__nptr);
+
+long long llabs (long long);
+lldiv_t lldiv (long long __numer, long long __denom);
+long long strtoll (const char *restrict __n, char **restrict __end_PTR, int __base);
+
+long long _strtoll_r (struct _reent *, const char *restrict __n, char **restrict __end_PTR, int __base);
+
+unsigned long long strtoull (const char *restrict __n, char **restrict __end_PTR, int __base);
+
+unsigned long long _strtoull_r (struct _reent *, const char *restrict __n, char **restrict __end_PTR, int __base);
+
+
+
+
+
+
+
+
+int _unsetenv_r (struct _reent *, const char *__string);
+
+
+
+
+
+
+
+char * _dtoa_r (struct _reent *, double, int, int, int *, int*, char**);
+
+void * _malloc_r (struct _reent *, size_t) ;
+void * _calloc_r (struct _reent *, size_t, size_t) ;
+void _free_r (struct _reent *, void *) ;
+void * _realloc_r (struct _reent *, void *, size_t) ;
+void _mstats_r (struct _reent *, char *);
+
+int _system_r (struct _reent *, const char *);
+
+void __eprintf (const char *, const char *, unsigned int, const char *);
+# 322 "/usr/include/newlib/stdlib.h"
+extern long double _strtold_r (struct _reent *, const char *restrict, char **restrict);
+
+extern long double strtold (const char *restrict, char **restrict);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 4 "app.cc"
 
 # 1 "/home/martin/Desktop/OLSONET/PICOS/PicOS/CC13XX/mach.h"
 
@@ -900,8 +1428,6 @@ typedef unsigned int uintptr_t;
 
 typedef long long int intmax_t;
 typedef long long unsigned int uintmax_t;
-# 40 "/usr/lib/gcc/arm-none-eabi/9.2.1/include/stdarg.h"
-typedef __builtin_va_list __gnuc_va_list;
 # 99 "/usr/lib/gcc/arm-none-eabi/9.2.1/include/stdarg.h"
 typedef __gnuc_va_list va_list;
 # 63 "/home/martin/Desktop/OLSONET/PICOS/PicOS/CC13XX/CC13XXWARE/driverlib/prcm.h"
@@ -6829,28 +7355,82 @@ typedef struct {
 } devinit_t;
 
 void adddevfunc (devreqfun_t, int);
-# 7 "app.cc"
+# 9 "app.cc"
 
 # 10 "/home/martin/Desktop/OLSONET/PICOS/PicOS/CC13XX/phys_cc1350.h"
 void phys_cc1350 (int, int);
 # 12 "/home/martin/Desktop/OLSONET/PICOS/PicOS/VLibs/PlugNull/plug_null.h"
 extern const tcvplug_t plug_null;
-# 10 "app.cc"
+# 12 "app.cc"
 
 
 
-char nodeId;
-short groupId;
+
+
+typedef enum {DISCOVERY_REQUEST, DISCOVERY_RESPONSE, CREATE_RECORD, DELETE_RECORD, RETRIEVE_RECORD, RESPONSE, IDLE = -1} protocol;
+
+typedef struct {
+    short senderGroupId;
+    char messageType;
+    char requestNumber;
+    char senderId;
+    char receiverId;
+    char messageRecord[20];
+    char recordIndex;
+    char status;
+    char padding;
+} message;
 
 typedef struct {
     time_t timeStamp;
-    byte ownerId;
-    byte message[20];
+    char ownerId;
+    char recordMessage[20];
 } record;
 
 record database[40];
 
+char nodeId;
+short groupId;
+
 int recordCount;
+
+protocol currentProtocol;
+
+int sfd = -1;
+
+
+
+
+#define Transmit_Message 0
+#define Confirm_Transmission 1
+# 50 "app.cc"
+void transmitter (word __pi_st) { message * messagePtr = (message *)(__pi_curr->data); switch (__pi_st) { 
+# 50 "app.cc"
+
+    case Transmit_Message : __stlab_Transmit_Message: {
+
+        address spkt;
+
+
+        spkt = tcv_wnps (Transmit_Message, sfd, sizeof(message) + 4, 0);
+        spkt [0] = 0;
+        byte * p = (byte*)(spkt + 1);
+        *p = messagePtr->senderGroupId; p += 2;
+        *p = messagePtr->messageType; p++;
+        *p = messagePtr->requestNumber; p++;
+        *p = messagePtr->senderId; p++;
+        *p = messagePtr->receiverId; p++;
+
+        tcv_endp (spkt);
+
+    } case Confirm_Transmission : __stlab_Confirm_Transmission: {
+        ser_outf(Transmit_Message, "Message Sent\n\r");
+        kill (0);
+break; } default: __pi_badstate (); } }
+#undef Transmit_Message
+#undef Confirm_Transmission
+# 70 "app.cc"
+
 
 
 
@@ -6870,6 +7450,21 @@ Boolean isValidNodeId(byte node) {
 }
 
 
+
+
+
+
+
+char randomNumber() {
+   time_t t;
+
+
+   srand((unsigned) time(&t));
+
+   return (char)rand();
+}
+
+
 #define Initialize 0
 #define Menu_Header 1
 #define Options 2
@@ -6878,9 +7473,20 @@ Boolean isValidNodeId(byte node) {
 #define Get_Group_ID 5
 #define Set_Node_ID 6
 #define Get_Node_ID 7
-# 43 "app.cc"
+#define Find_Neighbours 8
+#define Create_Record 9
+#define Get_Receiver_Node 10
+#define Get_Message 11
+#define Delete_Record 12
+#define Retrieve_Record 13
+#define Prompt_Recieving_Node 14
+#define Get_Receiving_Node 15
+#define Prompt_Record_Index 16
+#define Get_Record_Index 17
+#define Transmit_Message 18
+# 104 "app.cc"
 void root (word __pi_st) { switch (__pi_st) { 
-# 43 "app.cc"
+# 104 "app.cc"
 
 
     static char *menu="(G)roup ID\r\n""(N)ew device ID\r\n""(F)ind neighbors\r\n""(C)reate record on neighbor\r\n""(D)elete record on neighbor\r\n""(R)etrieve record from neighbor\r\n""(S)how local records\r\n""R(e)set local storage\r\n\r\n""Selection:";
@@ -6895,14 +7501,38 @@ void root (word __pi_st) { switch (__pi_st) {
 
     static char receiverId;
 
+    static message *messagePtr;
+
     case Initialize : __stlab_Initialize: {
         recordCount = 0;
 
         nodeId = 1;
         groupId = 1;
 
+        messagePtr = (message *) ((address)__pi_malloc (sizeof(message)));
+
+
+        phys_cc1350(0, 250);
+
+
+        tcv_plug(0, &plug_null);
+
+
+        sfd = tcv_open(((word)(-1)), 0, 0);
+  tcv_control(sfd, 4, 
+# 136 "app.cc"
+                              ((void *)0)
+# 136 "app.cc"
+                                  );
+
+
+  if (sfd < 0) {
+   diag("Cannot open tcv interface");
+   halt();
+  }
+
     } case Menu_Header : __stlab_Menu_Header: {
-        receiverId = 0;
+        currentProtocol = IDLE;
         ser_outf(Menu_Header, "\r\nGroup %d Device #%d (%d/%d records)\r\n", groupId, nodeId, recordCount, 40);
 
     } case Options : __stlab_Options: {
@@ -6927,22 +7557,22 @@ void root (word __pi_st) { switch (__pi_st) {
 
         case 'f':
         case 'F':
-            diag("Find neighbours");
+            proceed (Find_Neighbours);
             break;
 
         case 'c':
         case 'C':
-            diag("Create Record on Neighbour");
+            proceed (Create_Record);
             break;
 
         case 'd':
         case 'D':
-            diag("Delete Record on Neighbour");
+            proceed (Delete_Record);
             break;
 
         case 'r':
         case 'R':
-            diag("Retrieve Record on Neighbour");
+            proceed (Retrieve_Record);
             break;
 
         case 's':
@@ -6959,12 +7589,14 @@ void root (word __pi_st) { switch (__pi_st) {
 
         proceed (Menu_Header);
 
+
     } case Set_Group_ID : __stlab_Set_Group_ID: {
         ser_outf(Set_Group_ID, "New Group ID: ");
     } case Get_Group_ID : __stlab_Get_Group_ID: {
         ser_inf(Get_Group_ID, "%d", &groupId);
 
         proceed (Menu_Header);
+
 
     } case Set_Node_ID : __stlab_Set_Node_ID: {
         ser_outf(Set_Node_ID, "New node ID (1-25):");
@@ -6978,6 +7610,74 @@ void root (word __pi_st) { switch (__pi_st) {
 
         proceed (Menu_Header);
 
+
+    } case Find_Neighbours : __stlab_Find_Neighbours: {
+        currentProtocol = DISCOVERY_REQUEST;
+        receiverId = 0;
+        proceed (Transmit_Message);
+
+
+    } case Create_Record : __stlab_Create_Record: {
+        currentProtocol = CREATE_RECORD;
+        ser_outf(Create_Record, "Receiver node ID (1-25):");
+
+    } case Get_Receiver_Node : __stlab_Get_Receiver_Node: {
+        ser_inf(Get_Receiver_Node, "%d", &receiverId);
+
+        if(!isValidNodeId(receiverId)) {
+            proceed (Create_Record);
+        }
+
+    } case Get_Message : __stlab_Get_Message: {
+        ser_in(Get_Message, messagePtr->messageRecord, 20);
+
+        if(__pi_strlen (messagePtr->messageRecord) >= 20) {
+
+            messagePtr->messageRecord[20 - 1] = '/0';
+        }
+
+        proceed (Transmit_Message);
+
+
+
+    } case Delete_Record : __stlab_Delete_Record: {
+        currentProtocol = DELETE_RECORD;
+        ser_outf(Retrieve_Record, "Delete Record from Neighbour:\n\r");
+        proceed (Get_Receiving_Node);
+
+    } case Retrieve_Record : __stlab_Retrieve_Record: {
+        currentProtocol = RETRIEVE_RECORD;
+        ser_outf(Retrieve_Record, "Retrieve Record from Neighbour:\n\r");
+
+    } case Prompt_Recieving_Node : __stlab_Prompt_Recieving_Node: {
+        ser_outf(Prompt_Recieving_Node, "Neighbour node ID (1-25):");
+
+    } case Get_Receiving_Node : __stlab_Get_Receiving_Node: {
+        ser_inf(Get_Receiving_Node, "%d", &receiverId);
+
+        if(!isValidNodeId(receiverId)) {
+            proceed (Prompt_Recieving_Node);
+        }
+
+    } case Prompt_Record_Index : __stlab_Prompt_Record_Index: {
+        ser_outf(Prompt_Record_Index, "Record index:");
+
+    } case Get_Record_Index : __stlab_Get_Record_Index: {
+        char desiredRecordIndex = -1;
+        ser_inf(Get_Record_Index, "%d", &desiredRecordIndex);
+        messagePtr->recordIndex = desiredRecordIndex;
+
+        proceed (Transmit_Message);
+
+
+    } case Transmit_Message : __stlab_Transmit_Message: {
+        messagePtr -> senderGroupId = groupId;
+        messagePtr -> messageType = currentProtocol;
+        messagePtr -> requestNumber = randomNumber();
+        messagePtr -> senderId = nodeId;
+        messagePtr -> receiverId = receiverId;
+
+        do { if (__pi_join (__pi_fork (transmitter, (aword)(messagePtr )), Menu_Header )) __pi_release (); } while (0);
 break; } default: __pi_badstate (); } }
 #undef Initialize
 #undef Menu_Header
@@ -6987,5 +7687,16 @@ break; } default: __pi_badstate (); } }
 #undef Get_Group_ID
 #undef Set_Node_ID
 #undef Get_Node_ID
-# 140 "app.cc"
+#undef Find_Neighbours
+#undef Create_Record
+#undef Get_Receiver_Node
+#undef Get_Message
+#undef Delete_Record
+#undef Retrieve_Record
+#undef Prompt_Recieving_Node
+#undef Get_Receiving_Node
+#undef Prompt_Record_Index
+#undef Get_Record_Index
+#undef Transmit_Message
+# 291 "app.cc"
 
