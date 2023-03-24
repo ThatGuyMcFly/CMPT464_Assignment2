@@ -13,6 +13,7 @@
 #define MAX_RECORDS 40
 #define	MAX_PACKET_LENGTH 250
 #define RECORD_LENGTH 20
+#define MAX_NEIGHBOURS 26
 
 typedef enum {DISCOVERY_REQUEST, DISCOVERY_RESPONSE, CREATE_RECORD, DELETE_RECORD, RETRIEVE_RECORD, RESPONSE, IDLE = -1} protocol;
 
@@ -25,7 +26,6 @@ typedef struct {
     char messageRecord[RECORD_LENGTH];
     char recordIndex;
     char status;
-    char padding;
 } message;
 
 typedef struct {
@@ -36,38 +36,193 @@ typedef struct {
 
 record database[MAX_RECORDS];
 
+char neighbours[MAX_NEIGHBOURS];
+
 char nodeId;
 short groupId;
 
 int recordCount;
+int neighbourCount;
+
+char currentRequestNumber;
 
 protocol currentProtocol;
 
 message * messagePtr;
 
 int sfd = -1;
+
+/**
+ * Assembles the message in the message struct into a character array
+ * 
+ * Parameters:
+ *      messagePtr: a pointer to a message struct
+ * 
+ * Return:
+ *      Returns a character array that holds the required message to be sent
+*/
+char * assembleMessage(message * messagePtr) {
+    char * p;
+
+    switch(messagePtr->messageType) 
+    {
+    case DISCOVERY_REQUEST:
+    case DISCOVERY_RESPONSE:
+        p = (char*)umalloc(6);
+        break;
+
+    case RETRIEVE_RECORD:
+    case DELETE_RECORD:
+        p = (char*)umalloc(8);
+
+        p[6] = messagePtr->recordIndex;
+        p[7] = 0x00;
+        break;
+    
+    case CREATE_RECORD:
+        p = (char*)umalloc(26);
+        strcpy(p + 6, messagePtr->messageRecord);
+        break;
+    
+    case RESPONSE:
+        p = (char*)umalloc(28);
+        p[6] = messagePtr->status;
+        p[7] = 0x00;
+        strcpy(p + 8, messagePtr->messageRecord);
+        break;
+    } 
+
+    p[0] = messagePtr->senderGroupId;
+    p[2] = messagePtr->messageType;
+    p[3] = messagePtr->requestNumber;
+    p[4] = messagePtr->senderId;
+    p[5] = messagePtr->destinationId;
+
+    return p;
+}
+
+/**
+ * Determines the size of the packet to send based on the message type
+ * 
+ * Parameter:
+ *      messageType: a character representing the message type
+ * 
+ * Return:
+ *      an integer of how big the packet needs to be
+*/
+int getPacketSize(char messageType) {
+    int size = 0;
+    
+    switch(messageType) 
+    {
+    case DISCOVERY_REQUEST:
+    case DISCOVERY_RESPONSE:
+        size = 6;
+        break;
+
+    case RETRIEVE_RECORD:
+    case DELETE_RECORD:
+        size = 8;
+        break;
+    
+    case CREATE_RECORD:
+        size = 26;
+        break;
+    
+    case RESPONSE:
+        size = 28;
+        break;
+    }
+
+    return size + 4; // add four bytes for the two bytes before and after the payload
+}
+
 /**
  * State machine for handling transmitting messages
 */
 fsm transmitter (message * messagePtr) {
     state Transmit_Message:
 
+        char * assembledMessage = assembleMessage(messagePtr);
+
         address spkt;
 
         // populate packet pointer
-        spkt = tcv_wnp (Transmit_Message, sfd, sizeof(message) + 4);
+        spkt = tcv_wnp (Transmit_Message, sfd,  getPacketSize(messagePtr->messageType));
         spkt [0] = 0;
-        byte * p = (byte*)(spkt + 1); // skip first 2 bytes
-        *p = messagePtr->senderGroupId; p += 2; // insert group ID
-        *p = messagePtr->messageType; p++; // insert message type
-        *p = messagePtr->requestNumber; p++; // insert request number
-        *p = messagePtr->senderId; p++; // insert sender ID
-        *p = messagePtr->destinationId; p++; // insert receiver ID
+        char * p = (char*)(spkt + 1); // skip first 2 bytes
+        strcpy(p, assembledMessage);
 
         tcv_endp (spkt);
 
     state Confirm_Transmission:
-        ser_outf(Transmit_Message, "Message Sent\n\r");
+        finish;
+}
+
+/**
+ * Generates a random number
+ * 
+ *  Return:
+ *      returns a random 1 byte number
+*/
+char randomNumber() {
+   time_t t;
+   
+   /* Intializes random number generator */
+   srand((unsigned) time(&t));
+
+   return (char)rand();
+}
+
+void resetNeighbours(){
+    for (int i = 0; i < MAX_NEIGHBOURS; i ++) {
+        neighbours[i] = 0;
+    }
+}
+
+/**
+ * State machine for sending a discovery request
+*/
+fsm find {
+    int sendCount;
+    int i;
+
+    state Initialize:
+        i = 0;
+        sendCount = 0;
+        currentRequestNumber = randomNumber();
+
+        messagePtr -> senderGroupId = groupId;
+        messagePtr -> messageType = 0;
+        messagePtr -> requestNumber = currentRequestNumber;
+        messagePtr -> senderId = nodeId;
+        messagePtr -> destinationId = 0;
+
+    state Send_Discovery_Request:
+        if(sendCount == 2) {
+            proceed Display_Neighbours;
+        }
+
+        call transmitter(messagePtr, Wait);
+        sendCount++;
+
+    state Wait:
+        delay(3*1024, Send_Discovery_Request);
+        
+    state Display_Neighbours:
+        ser_outf(Display_Neighbours, "Neighbours:");
+    
+    state Display_Neighbour:
+        if (neighbours[i] == 1) {
+            ser_outf(Display_Neighbour, " %d", i);
+        }
+
+        i++;
+
+        if(i < MAX_NEIGHBOURS) {
+            proceed Display_Neighbour;
+        }
+
         finish;
 }
 
@@ -86,21 +241,6 @@ Boolean isValidNodeId(byte node) {
     }
 
     return YES;
-}
-
-/**
- * Generates a random number
- * 
- *  Return:
- *      returns a random 1 byte number
-*/
-char randomNumber() {
-   time_t t;
-   
-   /* Intializes random number generator */
-   srand((unsigned) time(&t));
-
-   return (char)rand();
 }
 
 fsm root {
@@ -222,9 +362,10 @@ fsm root {
 
 // - - - - - - - - - - - - Find Neighbour - - - - - - - - - - - - - //
     state Find_Neighbours:
-        currentProtocol = DISCOVERY_REQUEST;
-        receiverId = 0;
-        proceed Transmit_Message;
+        call find(Menu_Header);
+        // currentProtocol = DISCOVERY_REQUEST;
+        // receiverId = 0;
+        // proceed Transmit_Message;
 
 // - - - - - - - - - - - - Create Recrods - - - - - - - - - - - - - //    
     state Create_Record:

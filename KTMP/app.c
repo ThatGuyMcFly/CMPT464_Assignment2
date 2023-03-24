@@ -7367,6 +7367,7 @@ extern const tcvplug_t plug_null;
 
 
 
+
 typedef enum {DISCOVERY_REQUEST, DISCOVERY_RESPONSE, CREATE_RECORD, DELETE_RECORD, RETRIEVE_RECORD, RESPONSE, IDLE = -1} protocol;
 
 typedef struct {
@@ -7378,7 +7379,6 @@ typedef struct {
     char messageRecord[20];
     char recordIndex;
     char status;
-    char padding;
 } message;
 
 typedef struct {
@@ -7389,10 +7389,15 @@ typedef struct {
 
 record database[40];
 
+char neighbours[26];
+
 char nodeId;
 short groupId;
 
 int recordCount;
+int neighbourCount;
+
+char currentRequestNumber;
 
 protocol currentProtocol;
 
@@ -7403,35 +7408,198 @@ int sfd = -1;
 
 
 
+
+
+
+
+
+
+char * assembleMessage(message * messagePtr) {
+    char * p;
+
+    switch(messagePtr->messageType)
+    {
+    case DISCOVERY_REQUEST:
+    case DISCOVERY_RESPONSE:
+        p = (char*)((address)__pi_malloc (6));
+        break;
+
+    case RETRIEVE_RECORD:
+    case DELETE_RECORD:
+        p = (char*)((address)__pi_malloc (8));
+
+        p[6] = messagePtr->recordIndex;
+        p[7] = 0x00;
+        break;
+
+    case CREATE_RECORD:
+        p = (char*)((address)__pi_malloc (26));
+        __pi_strcpy (p + 6, messagePtr->messageRecord);
+        break;
+
+    case RESPONSE:
+        p = (char*)((address)__pi_malloc (28));
+        p[6] = messagePtr->status;
+        p[7] = 0x00;
+        __pi_strcpy (p + 8, messagePtr->messageRecord);
+        break;
+    }
+
+    p[0] = messagePtr->senderGroupId;
+    p[2] = messagePtr->messageType;
+    p[3] = messagePtr->requestNumber;
+    p[4] = messagePtr->senderId;
+    p[5] = messagePtr->destinationId;
+
+    return p;
+}
+
+
+
+
+
+
+
+
+
+
+int getPacketSize(char messageType) {
+    int size = 0;
+
+    switch(messageType)
+    {
+    case DISCOVERY_REQUEST:
+    case DISCOVERY_RESPONSE:
+        size = 6;
+        break;
+
+    case RETRIEVE_RECORD:
+    case DELETE_RECORD:
+        size = 8;
+        break;
+
+    case CREATE_RECORD:
+        size = 26;
+        break;
+
+    case RESPONSE:
+        size = 28;
+        break;
+    }
+
+    return size + 4;
+}
+
+
+
+
+
 #define Transmit_Message 0
 #define Confirm_Transmission 1
-# 52 "app.cc"
+# 143 "app.cc"
 void transmitter (word __pi_st) { message * messagePtr = (message *)(__pi_curr->data); switch (__pi_st) { 
-# 52 "app.cc"
+# 143 "app.cc"
 
     case Transmit_Message : __stlab_Transmit_Message: {
+
+        char * assembledMessage = assembleMessage(messagePtr);
 
         address spkt;
 
 
-        spkt = tcv_wnps (Transmit_Message, sfd, sizeof(message) + 4, 0);
+        spkt = tcv_wnps (Transmit_Message, sfd, getPacketSize(messagePtr->messageType), 0);
         spkt [0] = 0;
-        byte * p = (byte*)(spkt + 1);
-        *p = messagePtr->senderGroupId; p += 2;
-        *p = messagePtr->messageType; p++;
-        *p = messagePtr->requestNumber; p++;
-        *p = messagePtr->senderId; p++;
-        *p = messagePtr->destinationId; p++;
+        char * p = (char*)(spkt + 1);
+        __pi_strcpy (p, assembledMessage);
 
         tcv_endp (spkt);
 
     } case Confirm_Transmission : __stlab_Confirm_Transmission: {
-        ser_outf(Transmit_Message, "Message Sent\n\r");
         kill (0);
 break; } default: __pi_badstate (); } }
 #undef Transmit_Message
 #undef Confirm_Transmission
-# 72 "app.cc"
+
+
+
+
+
+char randomNumber() {
+   time_t t;
+
+
+   srand((unsigned) time(&t));
+
+   return (char)rand();
+}
+
+void resetNeighbours(){
+    for (int i = 0; i < 26; i ++) {
+        neighbours[i] = 0;
+    }
+}
+
+
+
+
+
+#define Initialize 0
+#define Send_Discovery_Request 1
+#define Wait 2
+#define Display_Neighbours 3
+#define Display_Neighbour 4
+# 186 "app.cc"
+void find (word __pi_st) { switch (__pi_st) { 
+# 186 "app.cc"
+
+    static int sendCount;
+    static int i;
+
+    case Initialize : __stlab_Initialize: {
+        i = 0;
+        sendCount = 0;
+        currentRequestNumber = randomNumber();
+
+        messagePtr -> senderGroupId = groupId;
+        messagePtr -> messageType = 0;
+        messagePtr -> requestNumber = currentRequestNumber;
+        messagePtr -> senderId = nodeId;
+        messagePtr -> destinationId = 0;
+
+    } case Send_Discovery_Request : __stlab_Send_Discovery_Request: {
+        if(sendCount == 2) {
+            proceed (Display_Neighbours);
+        }
+
+        do { if (__pi_join (__pi_fork (transmitter, (aword)(messagePtr )), Wait )) __pi_release (); } while (0);
+        sendCount++;
+
+    } case Wait : __stlab_Wait: {
+        delay(3*1024, Send_Discovery_Request);
+
+    } case Display_Neighbours : __stlab_Display_Neighbours: {
+        ser_outf(Display_Neighbours, "Neighbours:");
+
+    } case Display_Neighbour : __stlab_Display_Neighbour: {
+        if (neighbours[i] == 1) {
+            ser_outf(Display_Neighbour, " %d", i);
+        }
+
+        i++;
+
+        if(i < 26) {
+            proceed (Display_Neighbour);
+        }
+
+        kill (0);
+
+break; } default: __pi_badstate (); } }
+#undef Initialize
+#undef Send_Discovery_Request
+#undef Wait
+#undef Display_Neighbours
+#undef Display_Neighbour
+# 228 "app.cc"
 
 
 
@@ -7449,21 +7617,6 @@ Boolean isValidNodeId(byte node) {
     }
 
     return 1;
-}
-
-
-
-
-
-
-
-char randomNumber() {
-   time_t t;
-
-
-   srand((unsigned) time(&t));
-
-   return (char)rand();
 }
 
 
@@ -7486,9 +7639,9 @@ char randomNumber() {
 #define Prompt_Record_Index 16
 #define Get_Record_Index 17
 #define Transmit_Message 18
-# 106 "app.cc"
+# 247 "app.cc"
 void root (word __pi_st) { switch (__pi_st) { 
-# 106 "app.cc"
+# 247 "app.cc"
 
 
     static char *menu="(G)roup ID\r\n""(N)ew device ID\r\n""(F)ind neighbors\r\n""(C)reate record on neighbor\r\n""(D)elete record on neighbor\r\n""(R)etrieve record from neighbor\r\n""(S)how local records\r\n""R(e)set local storage\r\n\r\n""Selection: ";
@@ -7520,9 +7673,9 @@ void root (word __pi_st) { switch (__pi_st) {
 
         sfd = tcv_open(((word)(-1)), 0, 0);
   tcv_control(sfd, 4, 
-# 136 "app.cc"
+# 277 "app.cc"
                               ((void *)0)
-# 136 "app.cc"
+# 277 "app.cc"
                                   );
 
 
@@ -7612,9 +7765,10 @@ void root (word __pi_st) { switch (__pi_st) {
 
 
     } case Find_Neighbours : __stlab_Find_Neighbours: {
-        currentProtocol = DISCOVERY_REQUEST;
-        receiverId = 0;
-        proceed (Transmit_Message);
+        do { if (__pi_join (__pi_fork (find, (aword)(0)), Menu_Header )) __pi_release (); } while (0);
+
+
+
 
 
     } case Create_Record : __stlab_Create_Record: {
@@ -7698,5 +7852,5 @@ break; } default: __pi_badstate (); } }
 #undef Prompt_Record_Index
 #undef Get_Record_Index
 #undef Transmit_Message
-# 291 "app.cc"
+# 433 "app.cc"
 
