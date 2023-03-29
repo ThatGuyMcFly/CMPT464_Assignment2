@@ -438,9 +438,9 @@ fsm root {
 }
 
 /**
- * This FSM will  
+ * This FSM will run and listen to all incoming packets and sort them as rwquired
  * 
- * @return fsm 
+ * 
  */
 fsm receiver {
 
