@@ -49,6 +49,8 @@ char currentRequestNumber;
 protocol currentProtocol;
 
 message * messagePtr;
+message * receiveMessagePtr;
+message * discoveryResponceMessagePtr
 
 int sfd = -1;
 
@@ -264,7 +266,9 @@ fsm root {
         groupId = 1;
 
         messagePtr = (message *) umalloc(sizeof(message));
-
+        receiveMessagePtr = (message *) umalloc(sizeof(message));
+        discoveryResponceMessagePtr = (message *) umalloc(sizeof(message));
+        
         // Set up cc1350 board
         phys_cc1350(0, MAX_PACKET_LENGTH);
 
@@ -280,6 +284,8 @@ fsm root {
 			diag("Cannot open tcv interface");
 			halt();
 		}
+        // Start receiver
+        runfsm reciever;
 
     state Menu_Header:
         currentProtocol = IDLE;
@@ -429,4 +435,84 @@ fsm root {
         messagePtr -> destinationId = receiverId;
 
         call transmitter(messagePtr, Menu_Header);
+}
+
+/**
+ * This FSM will  
+ * 
+ * @return fsm 
+ */
+fsm receiver {
+
+    address rpkt;
+
+    state Receiving:
+        // wait for a message
+        rpkt = tcv_rnp (Receiving, sfd);
+
+        // start parcing the payload
+        // skip first 2 bytes and cast to char pointer
+        char * payload = (char *) (rpkt+1);
+        
+        // parce the payload
+        receiveMessagePtr -> senderGroupId = (short) *payload;
+        receiveMessagePtr -> messageType = *(payload+2);
+        receiveMessagePtr -> requestNumber = *(payload+3);
+        receiveMessagePtr -> senderId = *(payload+4);
+        receiveMessagePtr -> destinationId = *(payload+5);
+
+        // checks to see if recived packet belongs to the Group, if not returns to state finish 
+        if (receiveMessagePtr -> senderGroupId != groupId)
+            proceed finish;
+
+        // switches to the responce type
+        switch (receiveMessagePtr -> messageType)
+        {
+            case DISCOVERY_REQUEST:
+            discoveryResponceMessagePtr -> senderGroupId = groupId;
+            discoveryResponceMessagePtr -> messageType = DISCOVERY_RESPONSE;
+            discoveryResponceMessagePtr -> requestNumber = receiveMessagePtr -> requestNumber;
+            discoveryResponceMessagePtr -> senderId = nodeId;
+            discoveryResponceMessagePtr -> destinationId = receiveMessagePtr -> senderId;
+            call transmitter(discoveryResponceMessagePtr, Wait);
+            break;
+
+
+        case CREATE_RECORD:
+            // proceeds to finish if this this node was't the intended recipient
+            if (receiveMessagePtr -> destinationId != nodeId)
+                proceed finish;
+            strcpy(receiveMessagePtr -> messageRecord, *(payload+6));
+            break;
+        
+        case DELETE_RECORD:
+            if (receiveMessagePtr -> destinationId != nodeId)
+                proceed finish;
+            receiveMessagePtr -> recordIndex = *(payload+6);
+            break;
+        
+        case RETRIEVE_RECORD:
+            if (receiveMessagePtr -> destinationId != nodeId)
+                proceed finish;
+            receiveMessagePtr -> recordIndex = *(payload+6);
+            break;
+
+        case RESPONSE:
+            // filter out all packets that are not part of the currentRequestNumber
+            ( if discoveryResponceMessagePtr -> requestNumber != currentRequestNumber)
+                proceed finish;
+
+            receiveMessagePtr -> status = *(payload+6);
+            strcpy(receiveMessagePtr -> messageRecord, *(payload+8));
+            break;
+        }
+    state finish
+        // clear memory and return back to reciving
+        tcv_endp (rpkt); // I think this frees the memory
+        proceed Receiving;
+
+
+
+
+
 }
