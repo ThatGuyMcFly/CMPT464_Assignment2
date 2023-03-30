@@ -10,6 +10,8 @@
 #include "phys_cc1350.h"
 #include "plug_null.h"
 
+#include "time.h"
+
 #define MAX_RECORDS 40
 #define	MAX_PACKET_LENGTH 250
 #define RECORD_LENGTH 20
@@ -437,6 +439,65 @@ fsm root {
         call transmitter(messagePtr, Menu_Header);
 }
 
+void initialize_response(message *response){
+	response->senderGroupId = groupId;
+	response->messageType = RESPONSE;
+	response->requestNumber = receiveMessagePtr->requestNumber;
+	response->senderId = nodeId;
+	response->destinationId = receiveMessagePtr->senderId;
+	strcpy(response->messageRecord,"\0");
+}
+
+message *add_entry(){
+	message *response = umalloc(sizeof(message));
+	initialize_response(response);
+	if(recordCount >= MAX_RECORDS){
+		response->status = 0x02;
+		return response;
+	}
+	record *newRecord = umalloc(sizeof(record));
+	newRecord->timeStamp = time(NULL);
+	newRecord->ownerId = receiveMessagePtr->senderId;
+	strcpy(newRecord->recordMessage, receiveMessagePtr->messageRecord);
+	database[recordCount] = *newRecord;
+	recordCount++;
+	response->status = 0x01;
+	return response;
+}
+
+message *delete_entry(){
+	message *response = umalloc(sizeof(message));
+	initialize_response(response);
+	if(recordCount == 0){
+		response->status = 0x03;
+		return response;
+	}
+	if(receiveMessagePtr->recordIndex >= recordCount){ //Nothing here
+		response->status = 0x04;
+		return response;
+	}
+	response->status = 0x01;
+	//delete the element
+	database[receiveMessagePtr->recordIndex] = database[recordCount-1];
+	recordCount--;
+	return response;
+}
+
+message *retrieve_entry(){
+	message *response = umalloc(sizeof(message));
+	initialize_response(response);
+	if(recordCount == 0){
+		response->status = 0x03;
+		return response;
+	}
+	if(receiveMessagePtr->recordIndex >= recordCount){ //Nothing here
+		response->status = 0x04;
+		return response;
+	}
+	response->status = 0x01;
+	strcpy(response->messageRecord, database[receiveMessagePtr->recordIndex].recordMessage);
+	return response;
+
 /**
  * This FSM will run and listen to all incoming packets and sort them as rwquired
  * 
@@ -465,6 +526,7 @@ fsm receiver {
         if (receiveMessagePtr -> senderGroupId != groupId)
             proceed finish;
 
+	message *response;
         // switches to the responce type
         switch (receiveMessagePtr -> messageType)
         {
@@ -483,18 +545,24 @@ fsm receiver {
             if (receiveMessagePtr -> destinationId != nodeId)
                 proceed finish;
             strcpy(receiveMessagePtr -> messageRecord, *(payload+6));
+	    response = add_entry();
+	    call transmitter(response, finish);
             break;
         
         case DELETE_RECORD:
             if (receiveMessagePtr -> destinationId != nodeId)
                 proceed finish;
             receiveMessagePtr -> recordIndex = *(payload+6);
+	    response = delete_entry();
+	    call transmitter(response, finish);
             break;
         
         case RETRIEVE_RECORD:
             if (receiveMessagePtr -> destinationId != nodeId)
                 proceed finish;
             receiveMessagePtr -> recordIndex = *(payload+6);
+	    response = retrieve_entry();
+	    call transmitter(response, finish);
             break;
 
         case RESPONSE:
