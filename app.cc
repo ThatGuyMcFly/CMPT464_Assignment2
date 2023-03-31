@@ -54,6 +54,8 @@ int neighbourCount;
 
 char currentRequestNumber;
 
+protocol currentProtocol;
+
 int sfd = -1;
 void printByteArray(char* pointer, int length) {
     for (int i = 0; i < length; i++) {
@@ -322,15 +324,16 @@ fsm receiver {
             strcpy(receiveMessagePtr -> messageRecord, payload+8);
 
             currentRequestNumber = 0;
-	    if(currentProtocol == CREATE_RECORD){
-	    	proceed PARSE_CREATE_RECORD;    
-	    }else if(currentProtocol == DELETE_RECORD){
-	    	proceed PARSE_DELETE_RECORD;
-	    }else if(currentProtocol == RETRIEVE_RECORD){
-	    	proceed PARSE_RERIEVE_RECORD;
-	    }
-            break;
-        }
+	    
+            if(currentProtocol == CREATE_RECORD){
+                proceed Parse_Create_Record;    
+            }else if(currentProtocol == DELETE_RECORD){
+                proceed Parse_Delete_Record;
+            }else if(currentProtocol == RETRIEVE_RECORD){
+                proceed Parse_Retrieve_Record;
+            }
+                break;
+            }
         
     state Finish:
         if(response != NULL) {
@@ -340,29 +343,29 @@ fsm receiver {
         tcv_endp (rpkt); // I think this frees the memory
         proceed Receiving;
 	
-    state PARSE_CREATE_RECORD:
-	if(receiveMessagePtr->status == 0x01){
-	    ser_outf(PARSE_CREATE_RECORD, "\r\n Data Saved");	
-	}else{
-	    ser_outf(PARSE_CREATE_RECORD, "\r\n The record can't be saved on node %d", receiveMessagePtr->senderId);
-	}
-	proceed Finish;
+    state Parse_Create_Record:
+        if(receiveMessagePtr->status == 0x01){
+            ser_outf(Parse_Create_Record, "\r\n Data Saved");	
+        }else{
+            ser_outf(Parse_Create_Record, "\r\n The record can't be saved on node %d", receiveMessagePtr->senderId);
+        }
+        proceed Finish;
 	
-    state PARSE_DELETE_RECORD:
-	if(receiveMessagePtr->status == 0x01){
-	    ser_outf(PARSE_DELETE_RECORD, "\r\n Record Deleted");	
-	}else{
-	    ser_outf(PARSE_DELETE_RECORD, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
-	}
-	proceed Finish;
+    state Parse_Delete_Record:
+        if(receiveMessagePtr->status == 0x01){
+            ser_outf(Parse_Delete_Record, "\r\n Record Deleted");	
+        }else{
+            ser_outf(Parse_Delete_Record, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
+        }
+        proceed Finish;
 	
-    state PARSE_RETRIEVE_RECORD:
-	if(receiveMessagePtr->status == 0x01){
-	    ser_outf(PARSE_RETRIEVE_RECORD, "\r\n Record Received from %d: %s", receiveMessagePtr->senderId, receiveMessagePtr->messageRecord);	
-	}else{
-	    ser_outf(PARSE_RETRIEVE_RECORD, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
-	}
-	proceed Finish;
+    state Parse_Retrieve_Record:
+        if(receiveMessagePtr->status == 0x01){
+            ser_outf(Parse_Retrieve_Record, "\r\n Record Received from %d: %s", receiveMessagePtr->senderId, receiveMessagePtr->messageRecord);	
+        }else{
+            ser_outf(Parse_Retrieve_Record, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
+        }
+        proceed Finish;
 }
 
 /**
@@ -481,8 +484,6 @@ fsm root {
     char receiverId;
 
     message * messagePtr;
-
-    protocol currentProtocol;
 
     char currentRecord;
 
