@@ -674,7 +674,7 @@ fsm root {
     
     state Display_Record:
         if (currentRecord < recordCount) {
-            ser_outf(Display_Record, "%d\t%d\t\t%c\t%s\n\r", currentRecord, database[currentRecord].timeStamp, database[currentRecord].ownerId, database[currentRecord].recordMessage);
+            ser_outf(Display_Record, "%d\t%d\t\t%d\t%s\n\r", currentRecord, database[currentRecord].timeStamp, database[currentRecord].ownerId, database[currentRecord].recordMessage);
         } else {
             proceed Menu_Header;
         }
