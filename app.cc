@@ -222,6 +222,8 @@ fsm receiver {
 
     message * receiveMessagePtr;
 
+    message * response;
+
     state Initialize_Receiver:
         receiveMessagePtr = (message *) umalloc(sizeof(message));
 
@@ -248,7 +250,7 @@ fsm receiver {
 
     state Processing:
 
-        message * response;
+        
         message discoveryResponseMessage;
 
         // switches to the responce type
@@ -262,6 +264,14 @@ fsm receiver {
             discoveryResponseMessage.senderId = nodeId;
             discoveryResponseMessage.destinationId = receiveMessagePtr -> senderId;
             call transmitter(&discoveryResponseMessage, Finish);
+            break;
+
+        case DISCOVERY_RESPONSE:
+            if(receiveMessagePtr -> destinationId == nodeId && receiveMessagePtr -> requestNumber == currentRequestNumber) {
+                neighbours[receiveMessagePtr -> senderId] = 1;
+                neighbourCount++;
+            }
+
             break;
 
         case CREATE_RECORD:
@@ -309,6 +319,9 @@ fsm receiver {
         }
         
     state Finish:
+        if(response != NULL) {
+            ufree(response);
+        }
         // clear memory and return back to reciving
         tcv_endp (rpkt); // I think this frees the memory
         proceed Receiving;
@@ -358,6 +371,7 @@ fsm find {
 
     state Send_Discovery_Request:
         if(sendCount == 2) {
+            currentRequestNumber = 0;
             proceed Display_Neighbours;
         }
 
@@ -399,6 +413,14 @@ Boolean isValidNodeId(byte node) {
     }
 
     return YES;
+}
+
+Boolean isNeighbour(char node) {
+    if(neighbours[node] == 1) {
+        return YES;
+    }
+
+    return NO;
 }
 
 fsm root {
@@ -535,7 +557,7 @@ fsm root {
     state Get_Receiver_Node:
         ser_inf(Get_Receiver_Node, "%d", &receiverId);
 
-        if(!isValidNodeId(receiverId)) {
+        if(!isValidNodeId(receiverId) && !isNeighbour(receiverId)) {
             proceed Create_Record;
         }
 
@@ -566,7 +588,7 @@ fsm root {
     state Get_Receiving_Node:
         ser_inf(Get_Receiving_Node, "%d", &receiverId);
 
-        if(!isValidNodeId(receiverId)) {
+        if(!isValidNodeId(receiverId) && !isNeighbour(receiverId)) {
             proceed Prompt_Recieving_Node;
         }
     
