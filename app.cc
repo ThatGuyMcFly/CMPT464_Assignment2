@@ -139,7 +139,7 @@ fsm transmitter (message * messagePtr) {
         char * p = (char*) (spkt+1); // skip first 2 bytes
         memcpy(p, details.messageContent, details.messageSize);
 
-        // printByteArray(p, 6);
+        printByteArray(p, 6);
         
         tcv_endp (spkt);
 
@@ -147,9 +147,7 @@ fsm transmitter (message * messagePtr) {
         finish;
 }
 
-message * initialize_response(message * receiveMessagePtr){
-    
-    message *response = (message *)umalloc(sizeof(message));
+void initialize_response(message * response, message * receiveMessagePtr){
 
 	response->senderGroupId = groupId;
 	response->messageType = RESPONSE;
@@ -160,36 +158,34 @@ message * initialize_response(message * receiveMessagePtr){
     strcpy(response->messageRecord,"\0");
 }
 
-message *add_entry(message *receiveMessagePtr){
-	message *response = initialize_response(receiveMessagePtr);
+void add_entry(message * response, message *receiveMessagePtr){
+	initialize_response(response, receiveMessagePtr);
 
 	if(recordCount >= MAX_RECORDS){
 		response->status = 0x02;
-		return response;
+		return;
 	}
 
     database[recordCount].ownerId = receiveMessagePtr->senderId;
     database[recordCount].timeStamp = time(NULL);
     strcpy(database[recordCount].recordMessage, receiveMessagePtr->messageRecord);
 	
+    diag("%s", database[recordCount].recordMessage);
+
     recordCount++;
 	
     response->status = 0x01;
-	
-    return response;
 }
 
-message *delete_entry(message *receiveMessagePtr){
-	message *response = initialize_response(receiveMessagePtr);
-	
+void delete_entry(message * response, message *receiveMessagePtr){	
     if(recordCount == 0){
 		response->status = 0x03;
-		return response;
+		return;
 	}
 
 	if(receiveMessagePtr->recordIndex >= recordCount){ //Nothing here
 		response->status = 0x04;
-		return response;
+        return;
 	}
 	
     response->status = 0x01;
@@ -197,28 +193,22 @@ message *delete_entry(message *receiveMessagePtr){
     //delete the element
 	database[receiveMessagePtr->recordIndex] = database[recordCount-1];
 	recordCount--;
-
-	return response;
 }
 
-message *retrieve_entry(message *receiveMessagePtr){
-	message *response = initialize_response(receiveMessagePtr);
-	
+void retrieve_entry(message * response, message *receiveMessagePtr){	
     if(recordCount == 0){
 		response->status = 0x03;
-		return response;
+		return;
 	}
 	
     if(receiveMessagePtr->recordIndex >= recordCount){ //Nothing here
 		response->status = 0x04;
-		return response;
+		return;
 	}
 	
     response->status = 0x01;
 	
     strcpy(response->messageRecord, database[receiveMessagePtr->recordIndex].recordMessage);
-	
-    return response;
 }
 
 /**
@@ -240,6 +230,8 @@ fsm receiver {
         receiveMessagePtr = (message *) umalloc(sizeof(message));
 
         discoveryResponseMessage = (message *) umalloc(sizeof(message));
+
+        response = (message*) umalloc(sizeof(message));
 
     state Receiving:
 
@@ -264,7 +256,7 @@ fsm receiver {
 
     state Processing:
 
-        
+        initialize_response(response, receiveMessagePtr);
         
         // switches to the responce type
         switch (receiveMessagePtr -> messageType) {
@@ -292,9 +284,13 @@ fsm receiver {
                 proceed Finish;
             }
 
+            diag("%s", payload+6);
+
             strcpy(receiveMessagePtr -> messageRecord, payload+6);
 
-	        call transmitter(add_entry(receiveMessagePtr), Finish);
+            diag("%s", receiveMessagePtr -> messageRecord);
+            add_entry(response, receiveMessagePtr);
+	        call transmitter(response, Finish);
             break;
         
         case 3:
@@ -303,8 +299,8 @@ fsm receiver {
             }
 
             receiveMessagePtr -> recordIndex = *(payload+6);
-	        //response = delete_entry();
-	        call transmitter(delete_entry(receiveMessagePtr), Finish);
+            delete_entry(response, receiveMessagePtr);
+	        call transmitter(response, Finish);
             break;
         
         case 4:
@@ -313,8 +309,8 @@ fsm receiver {
             }
 
             receiveMessagePtr -> recordIndex = *(payload+6);
-	        //response = retrieve_entry();
-	        call transmitter(retrieve_entry(receiveMessagePtr), Finish);
+	        retrieve_entry(response, receiveMessagePtr);
+	        call transmitter(response, Finish);
             break;
 
         case 5:
@@ -339,9 +335,6 @@ fsm receiver {
             }
         
     state Finish:
-        if(response != NULL) {
-            ufree(response);
-        }
         // clear memory and return back to reciving
         tcv_endp (rpkt); // I think this frees the memory
         proceed Receiving;
@@ -670,6 +663,7 @@ fsm root {
         release;
 
     state Display_Records:
+        diag("here");
         currentRecord = 0;
         if (recordCount > 0) {
             ser_outf(Display_Records, "Index\tTime Stamp\t\tOwner ID\tRecord Data\n");
