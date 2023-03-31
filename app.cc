@@ -55,6 +55,11 @@ int neighbourCount;
 char currentRequestNumber;
 
 int sfd = -1;
+void printByteArray(char* pointer, int length) {
+    for (int i = 0; i < length; i++) {
+        diag("%x", pointer[i]);
+    }
+}
 
 /**
  * Creates a struct that holds the message content and size of the message
@@ -67,7 +72,7 @@ int sfd = -1;
 */
 messageDetails getMessageDetials(message * messagePtr) {
     messageDetails details;
-    
+
     char * p;
     char size;
     switch(messagePtr->messageType) 
@@ -101,17 +106,20 @@ messageDetails getMessageDetials(message * messagePtr) {
         break;
     } 
 
-    p[0] = messagePtr->senderGroupId;
+    p[1] = messagePtr->senderGroupId & 0xff;
+    p[0] = (messagePtr->senderGroupId >> 8) & 0xff;
     p[2] = messagePtr->messageType;
     p[3] = messagePtr->requestNumber;
     p[4] = messagePtr->senderId;
     p[5] = messagePtr->destinationId;
 
-    details.messageSize = size + 4;
+    details.messageSize = size;
     details.messageContent = p;
     
     return details;
 }
+
+
 
 /**
  * State machine for handling transmitting messages
@@ -120,15 +128,15 @@ fsm transmitter (message * messagePtr) {
 
     state Transmit_Message:
         messageDetails details = getMessageDetials(messagePtr);
-
+        
         address spkt;
 
         // populate packet pointer
-        spkt = tcv_wnp (Transmit_Message, sfd,  details.messageSize);
+        spkt = tcv_wnp (Transmit_Message, sfd,  details.messageSize + 4);
         spkt [0] = 0;
-        char * p = (char*)(spkt + 1); // skip first 2 bytes
-        strcpy(p, details.messageContent);
-
+        char * p = (char*) (spkt+1); // skip first 2 bytes
+        memcpy(p, details.messageContent, details.messageSize);
+        
         tcv_endp (spkt);
 
     state Confirm_Transmission:
@@ -248,14 +256,15 @@ fsm receiver {
 
     state Processing:
 
-        
         message discoveryResponseMessage;
 
         // switches to the responce type
         switch (receiveMessagePtr -> messageType) {
             
-        case DISCOVERY_REQUEST:
+        case 0:
             
+            // diag("Discovery Request");
+
             discoveryResponseMessage.senderGroupId = groupId;
             discoveryResponseMessage.messageType = DISCOVERY_RESPONSE;
             discoveryResponseMessage.requestNumber = receiveMessagePtr -> requestNumber;
@@ -264,7 +273,7 @@ fsm receiver {
             call transmitter(&discoveryResponseMessage, Finish);
             break;
 
-        case DISCOVERY_RESPONSE:
+        case 1:
             if(receiveMessagePtr -> destinationId == nodeId && receiveMessagePtr -> requestNumber == currentRequestNumber) {
                 neighbours[receiveMessagePtr -> senderId] = 1;
                 neighbourCount++;
@@ -272,7 +281,7 @@ fsm receiver {
 
             break;
 
-        case CREATE_RECORD:
+        case 2:
             // proceeds to finish if this this node was't the intended recipient
             if (receiveMessagePtr -> destinationId != nodeId){
                 proceed Finish;
@@ -283,7 +292,7 @@ fsm receiver {
 	        call transmitter(add_entry(receiveMessagePtr), Finish);
             break;
         
-        case DELETE_RECORD:
+        case 3:
             if (receiveMessagePtr -> destinationId != nodeId) {
                 proceed Finish;
             }
@@ -293,7 +302,7 @@ fsm receiver {
 	        call transmitter(delete_entry(receiveMessagePtr), Finish);
             break;
         
-        case RETRIEVE_RECORD:
+        case 4:
             if (receiveMessagePtr -> destinationId != nodeId){
                 proceed Finish;
             }
@@ -303,7 +312,7 @@ fsm receiver {
 	        call transmitter(retrieve_entry(receiveMessagePtr), Finish);
             break;
 
-        case RESPONSE:
+        case 5:
             // filter out all packets that are not part of the currentRequestNumber
             if (receiveMessagePtr -> requestNumber != currentRequestNumber){
                 proceed Finish;
@@ -336,9 +345,9 @@ char randomNumber() {
    time_t t;
    
    /* Intializes random number generator */
-   srand((unsigned) time(&t));
+   //srand((unsigned) time(&t));
 
-   return (char)rand();
+   return (char)rand() % 0xff;
 }
 
 void resetNeighbours(){
@@ -354,7 +363,7 @@ fsm find {
     int sendCount;
     int i;
 
-    message findMessage;
+    message * findMessage;
 
     state Initialize:
         resetNeighbours();
@@ -363,11 +372,13 @@ fsm find {
         sendCount = 0;
         currentRequestNumber = randomNumber();
 
-        findMessage.senderGroupId = groupId;
-        findMessage.messageType = 0;
-        findMessage.requestNumber = currentRequestNumber;
-        findMessage.senderId = nodeId;
-        findMessage.destinationId = 0;
+        findMessage = (message*) umalloc(6);
+
+        findMessage->senderGroupId = groupId;
+        findMessage->messageType = DISCOVERY_REQUEST;
+        findMessage->requestNumber = currentRequestNumber;
+        findMessage->senderId = nodeId;
+        findMessage->destinationId = 0;
 
     state Send_Discovery_Request:
         
@@ -377,7 +388,7 @@ fsm find {
         }
         
         sendCount++;
-        call transmitter(&findMessage, Wait);
+        call transmitter(findMessage, Wait);
 
     state Wait:
         delay(3*SECOND, Send_Discovery_Request);
