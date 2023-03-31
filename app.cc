@@ -666,17 +666,20 @@ fsm root {
         diag("here");
         currentRecord = 0;
         if (recordCount > 0) {
-            ser_outf(Display_Records, "Index\tTime Stamp\t\tOwner ID\tRecord Data\n");
+            ser_outf(Display_Records, "Index\tTime Stamp\t\tOwner ID\tRecord Data\n\r");
         } else {
-            ser_outf(Display_Records, "No Records to Display\n");
+            ser_outf(Display_Records, "No Records to Display\n\r");
+            proceed Menu_Header;
         }
     
     state Display_Record:
         if (currentRecord < recordCount) {
-            ser_outf(Display_Record, "%d\t%d\t\t%c\t%s\n", currentRecord, database[currentRecord].timeStamp, database[currentRecord].ownerId, database[currentRecord].recordMessage);
+            ser_outf(Display_Record, "%d\t%d\t\t%c\t%s\n\r", currentRecord, database[currentRecord].timeStamp, database[currentRecord].ownerId, database[currentRecord].recordMessage);
         } else {
             proceed Menu_Header;
         }
 
+        currentRecord++;
+        proceed Display_Record;
 
 }
