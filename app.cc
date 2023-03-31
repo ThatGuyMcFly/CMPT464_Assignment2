@@ -16,6 +16,7 @@
 #define	MAX_PACKET_LENGTH 250
 #define RECORD_LENGTH 20
 #define MAX_NEIGHBOURS 26
+#define SECOND 1024
 
 typedef enum {DISCOVERY_REQUEST, DISCOVERY_RESPONSE, CREATE_RECORD, DELETE_RECORD, RETRIEVE_RECORD, RESPONSE} protocol;
 
@@ -118,10 +119,7 @@ messageDetails getMessageDetials(message * messagePtr) {
 fsm transmitter (message * messagePtr) {
 
     state Transmit_Message:
-
         messageDetails details = getMessageDetials(messagePtr);
-
-        char * assembledMessage = details.messageContent;
 
         address spkt;
 
@@ -129,7 +127,7 @@ fsm transmitter (message * messagePtr) {
         spkt = tcv_wnp (Transmit_Message, sfd,  details.messageSize);
         spkt [0] = 0;
         char * p = (char*)(spkt + 1); // skip first 2 bytes
-        strcpy(p, assembledMessage);
+        strcpy(p, details.messageContent);
 
         tcv_endp (spkt);
 
@@ -389,6 +387,8 @@ fsm find {
     message findMessage;
 
     state Initialize:
+        resetNeighbours();
+
         i = 0;
         sendCount = 0;
         currentRequestNumber = randomNumber();
@@ -400,17 +400,19 @@ fsm find {
         findMessage.destinationId = 0;
 
     state Send_Discovery_Request:
+        
         if(sendCount == 2) {
             currentRequestNumber = 0;
             proceed Display_Neighbours;
         }
-
-        call transmitter(&findMessage, Wait);
+        
         sendCount++;
+        call transmitter(&findMessage, Wait);
 
     state Wait:
-        delay(3*1024, Send_Discovery_Request);
-        
+        delay(3*SECOND, Send_Discovery_Request);
+        release;
+
     state Display_Neighbours:
         ser_outf(Display_Neighbours, "Neighbours:");
     
@@ -471,11 +473,13 @@ fsm root {
 
     protocol currentProtocol;
 
+    char currentRecord;
+
     state Initialize:
         recordCount = 0;
 
         nodeId = 1;
-        groupId = 1;
+        groupId = 6;
 
         messagePtr = (message *) umalloc(sizeof(message));
         
@@ -542,12 +546,12 @@ fsm root {
         
         case 's':
         case 'S':
-            diag("Show Local Records");
+            proceed Display_Records;
             break;
         
         case 'e':
         case 'E':
-            diag("Reset Local Storage");
+            recordCount = 0;
             break;
 
         }
@@ -591,6 +595,9 @@ fsm root {
             proceed Create_Record;
         }
 
+    state Prompt_Message:
+        ser_outf(Prompt_Message, "Enter a message: ");
+
     state Get_Message:
         ser_in(Get_Message, messagePtr->messageRecord, RECORD_LENGTH);
 
@@ -606,7 +613,7 @@ fsm root {
     state Delete_Record:
         currentProtocol = DELETE_RECORD;
         ser_outf(Retrieve_Record, "Delete Record from Neighbour:\n\r");
-        proceed Get_Receiving_Node;
+        proceed Prompt_Recieving_Node;
 
     state Retrieve_Record:
         currentProtocol = RETRIEVE_RECORD;
@@ -643,4 +650,24 @@ fsm root {
         messagePtr -> destinationId = receiverId;
 
         call transmitter(messagePtr, Menu_Header);
+
+        delay(3*SECOND, Menu_Header);
+        release;
+
+    state Display_Records:
+        currentRecord = 0;
+        if (recordCount > 0) {
+            ser_outf(Display_Records, "Index\tTime Stamp\t\tOwner ID\tRecord Data\n");
+        } else {
+            ser_outf(Display_Records, "No Records to Display\n");
+        }
+    
+    state Display_Record:
+        if (currentRecord < recordCount) {
+            ser_outf(Display_Record, "%d\t%d\t\t%c\t%s\n", currentRecord, database[currentRecord].timeStamp, database[currentRecord].ownerId, database[currentRecord].recordMessage);
+        } else {
+            proceed Menu_Header;
+        }
+
+
 }
