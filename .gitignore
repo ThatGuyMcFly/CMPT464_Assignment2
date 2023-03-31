@@ -1,0 +1,6 @@
+# Ignore everything
+*
+
+# Dont ignore main code file and gitignore file
+!app.cc
+!.gitignore
