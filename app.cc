@@ -313,6 +313,13 @@ fsm receiver {
             strcpy(receiveMessagePtr -> messageRecord, payload+8);
 
             currentRequestNumber = 0;
+	    if(currentProtocol == CREATE_RECORD){
+	    	proceed PARSE_CREATE_RECORD;    
+	    }else if(currentProtocol == DELETE_RECORD){
+	    	proceed PARSE_DELETE_RECORD;
+	    }else if(currentProtocol == RETRIEVE_RECORD){
+	    	proceed PARSE_RERIEVE_RECORD;
+	    }
             break;
         }
         
@@ -323,7 +330,30 @@ fsm receiver {
         // clear memory and return back to reciving
         tcv_endp (rpkt); // I think this frees the memory
         proceed Receiving;
-
+	
+    state PARSE_CREATE_RECORD:
+	if(receiveMessagePtr->status == 0x01){
+	    ser_outf(PARSE_CREATE_RECORD, "\r\n Data Saved");	
+	}else{
+	    ser_outf(PARSE_CREATE_RECORD, "\r\n The record can't be saved on node %d", receiveMessagePtr->senderId);
+	}
+	proceed Finish;
+	
+    state PARSE_DELETE_RECORD:
+	if(receiveMessagePtr->status == 0x01){
+	    ser_outf(PARSE_DELETE_RECORD, "\r\n Record Deleted");	
+	}else{
+	    ser_outf(PARSE_DELETE_RECORD, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
+	}
+	proceed Finish;
+	
+    state PARSE_RETRIEVE_RECORD:
+	if(receiveMessagePtr->status == 0x01){
+	    ser_outf(PARSE_RETRIEVE_RECORD, "\r\n Record Received from %d: %s", receiveMessagePtr->senderId, receiveMessagePtr->messageRecord);	
+	}else{
+	    ser_outf(PARSE_RETRIEVE_RECORD, "\r\n The record does not exist on node %d", receiveMessagePtr->senderId);
+	}
+	proceed Finish;
 }
 
 /**
