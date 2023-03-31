@@ -108,8 +108,8 @@ messageDetails getMessageDetials(message * messagePtr) {
         break;
     } 
 
-    p[1] = messagePtr->senderGroupId & 0xff;
-    p[0] = (messagePtr->senderGroupId >> 8) & 0xff;
+    p[0] = messagePtr->senderGroupId & 0xff;
+    p[1] = (messagePtr->senderGroupId >> 8) & 0xff;
     p[2] = messagePtr->messageType;
     p[3] = messagePtr->requestNumber;
     p[4] = messagePtr->senderId;
@@ -138,6 +138,8 @@ fsm transmitter (message * messagePtr) {
         spkt [0] = 0;
         char * p = (char*) (spkt+1); // skip first 2 bytes
         memcpy(p, details.messageContent, details.messageSize);
+
+        // printByteArray(p, 6);
         
         tcv_endp (spkt);
 
@@ -232,8 +234,12 @@ fsm receiver {
 
     message * response;
 
+    message * discoveryResponseMessage;
+
     state Initialize_Receiver:
         receiveMessagePtr = (message *) umalloc(sizeof(message));
+
+        discoveryResponseMessage = (message *) umalloc(sizeof(message));
 
     state Receiving:
 
@@ -258,21 +264,18 @@ fsm receiver {
 
     state Processing:
 
-        message discoveryResponseMessage;
-
+        
+        
         // switches to the responce type
         switch (receiveMessagePtr -> messageType) {
             
         case 0:
-            
-            // diag("Discovery Request");
-
-            discoveryResponseMessage.senderGroupId = groupId;
-            discoveryResponseMessage.messageType = DISCOVERY_RESPONSE;
-            discoveryResponseMessage.requestNumber = receiveMessagePtr -> requestNumber;
-            discoveryResponseMessage.senderId = nodeId;
-            discoveryResponseMessage.destinationId = receiveMessagePtr -> senderId;
-            call transmitter(&discoveryResponseMessage, Finish);
+            discoveryResponseMessage->senderGroupId = groupId;
+            discoveryResponseMessage->messageType = 1;
+            discoveryResponseMessage->requestNumber = receiveMessagePtr -> requestNumber;
+            discoveryResponseMessage->senderId = nodeId;
+            discoveryResponseMessage->destinationId = receiveMessagePtr -> senderId;
+            call transmitter(discoveryResponseMessage, Finish);
             break;
 
         case 1:
